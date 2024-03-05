@@ -91,7 +91,10 @@ symbol you can put your mouse cursor above the symbol and wait for one second.
 -/
 
 example (f g : ℝ → ℝ) (hf : even_fun f) : even_fun (g ∘ f) := by {
-  sorry
+  intro x
+  calc
+    (g ∘ f) (-x) = g (f (-x)) := by rfl
+               _ = g (f x)    := by rw [hf]
 }
 
 /-
