@@ -22,11 +22,11 @@ Let's prove some exercises using `linarith`.
 -/
 
 example (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) : 0 ≤ a + b := by {
-  sorry
+  linarith
 }
 
 example (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d) : a + c ≤ b + d := by {
-  sorry
+  linarith
 }
 
 /-
@@ -61,7 +61,11 @@ where `by linarith` will provide the proof of `δ/2 > 0` expected by Lean.
 /- If u is constant with value l then u tends to l.
 Hint: `simp` can rewrite `|1 - 1|` to `0` -/
 example (h : ∀ n, u n = l) : seq_limit u l := by {
-  sorry
+  intros ε ε_pos
+  use 0
+  intros n _
+  simp [h]
+  linarith
 }
 
 
@@ -80,10 +84,16 @@ or the primed version:
 `abs_sub_le' (a c b : ℝ) : |a - b| ≤ |a - c| + |b - c|`
 -/
 
--- Assume `l > 0`. Then `u` ts to `l` implies `u n ≥ l/2` for large enough `n`
+-- Assume `l > 0`. Then `u` tends to `l` implies `u n ≥ l/2` for large enough `n`
 example (h : seq_limit u l) (hl : l > 0) :
     ∃ N, ∀ n ≥ N, u n ≥ l/2 := by {
-  sorry
+  specialize h (l/2) (by linarith)
+  obtain ⟨N, hN⟩ := h
+  use N
+  intros n hn
+  specialize hN n hn
+  have := abs_le.mp hN
+  linarith
 }
 
 
@@ -126,7 +136,19 @@ example (hu : seq_limit u l) (hv : seq_limit v l') :
 /- Let's do something similar: the squeezing theorem. -/
 example (hu : seq_limit u l) (hw : seq_limit w l) (h : ∀ n, u n ≤ v n) (h' : ∀ n, v n ≤ w n) :
     seq_limit v l := by {
-  sorry
+  intros ε ε_pos
+  have ⟨N₁, hN₁⟩ := hu ε ε_pos
+  have ⟨N₂, hN₂⟩ := hw ε ε_pos
+  use max N₁ N₂
+  intros n hn
+  rw [ge_max_iff] at hn
+  have ub : v n - l ≤ ε := by calc
+    v n - l ≤ w n - l := by simp [h' n]
+    _ ≤ ε := (abs_le.mp (hN₂ n (by linarith))).right
+  have lb : -ε ≤ v n - l := by calc
+    -ε ≤ u n - l := (abs_le.mp (hN₁ n (by linarith))).left
+    _ ≤ v n - l := by simp [h n]
+  exact abs_le.mpr ⟨lb, ub⟩
 }
 
 
@@ -141,7 +163,18 @@ Recall we listed three variations on the triangle inequality at the beginning of
 -- A sequence admits at most one limit. You will be able to use that lemma in the following
 -- exercises.
 lemma uniq_limit : seq_limit u l → seq_limit u l' → l = l' := by {
-  sorry
+  intros hl hl'
+  apply eq_of_abs_sub_le_all
+  intros ε ε_pos
+  have ⟨N, hN⟩ := hl (ε/2) (by linarith)
+  have ⟨N', hN'⟩ := hl' (ε/2) (by linarith)
+  let N₀ := max N N'
+  specialize hN N₀ (by apply le_max_left)
+  specialize hN' N₀ (by apply le_max_right)
+  calc
+    |l - l'| ≤ |l - u N₀| + |u N₀ - l'| := by apply abs_sub_le
+    _ ≤ ε/2 + ε/2 := by rw [abs_sub_comm]; linarith
+    _ = ε := by ring
 }
 
 
@@ -156,7 +189,14 @@ def is_seq_sup (M : ℝ) (u : ℕ → ℝ) :=
 (∀ n, u n ≤ M) ∧ ∀ ε > 0, ∃ n₀, u n₀ ≥ M - ε
 
 example (M : ℝ) (h : is_seq_sup M u) (h' : non_decreasing u) : seq_limit u M := by {
-  sorry
+  intros ε ε_pos
+  obtain ⟨n₀, hn₀⟩ := h.right ε ε_pos
+  use n₀
+  intros n hn
+  apply abs_le.mpr
+  constructor
+  · linarith [h' n₀ n hn]
+  · linarith [h.left n]
 }
 
 /-
@@ -190,7 +230,12 @@ In the exercise, we use `∃ n ≥ N, ...` which is the abbreviation of
 /-- Extractions take arbitrarily large values for arbitrarily large
 inputs. -/
 lemma extraction_ge : extraction φ → ∀ N N', ∃ n ≥ N', φ n ≥ N := by {
-  sorry
+  intros hφ N N'
+  use max N N'
+  have := id_le_extraction' hφ (max N N')
+  constructor
+  · exact le_max_right N N'
+  · linarith [le_max_left N N']
 }
 
 /- A real number `a` is a cluster point of a sequence `u`

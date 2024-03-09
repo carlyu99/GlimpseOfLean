@@ -183,14 +183,14 @@ The following exercises teach you two such techniques.
 /- Use `simp` to prove the following. Note that `X : Set ℝ`
 means that `X` is a set containing (only) real numbers. -/
 example (x : ℝ) (X Y : Set ℝ) (hx : x ∈ X) : x ∈ (X ∩ Y) ∪ (X \ Y) := by {
-  sorry
+  simp [hx]
 }
 
 /- Use `apply?` to find the lemma that every continuous function with compact support
 has a global minimum. -/
 
 example (f : ℝ → ℝ) (hf : Continuous f) (h2f : HasCompactSupport f) : ∃ x, ∀ y, f x ≤ f y := by {
-  sorry
+  exact Continuous.exists_forall_le_of_hasCompactSupport hf h2f
 }
 
 /-
