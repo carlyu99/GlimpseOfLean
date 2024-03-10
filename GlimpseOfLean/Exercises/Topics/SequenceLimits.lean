@@ -249,7 +249,11 @@ if `u` has a subsequence converging to `a`.
 `u` arbitrarily close to `a` for arbitrarily large input. -/
 lemma near_cluster :
   cluster_point u a → ∀ ε > 0, ∀ N, ∃ n ≥ N, |u n - a| ≤ ε := by {
-  sorry
+  intros u_at_a ε ε_pos N
+  rcases u_at_a with ⟨φ, hφ, hlim⟩
+  rcases hlim ε ε_pos with ⟨N', hN'⟩
+  rcases extraction_ge hφ N N' with ⟨n', hn', hφn'⟩
+  use φ n', hφn', hN' n' hn'
 }
 
 
