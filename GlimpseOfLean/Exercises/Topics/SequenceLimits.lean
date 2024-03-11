@@ -260,12 +260,19 @@ lemma near_cluster :
 /-- If `u` tends to `l` then its subsequences tend to `l`. -/
 lemma subseq_tendsto_of_tendsto' (h : seq_limit u l) (hφ : extraction φ) :
 seq_limit (u ∘ φ) l := by {
-  sorry
+  intros ε ε_pos
+  rcases h ε ε_pos with ⟨N, hN⟩
+  use N
+  intros n hn
+  exact hN (φ n) (by linarith [id_le_extraction' hφ n])
 }
 
 /-- If `u` tends to `l` all its cluster points are equal to `l`. -/
 lemma cluster_limit (hl : seq_limit u l) (ha : cluster_point u a) : a = l := by {
-  sorry
+  rcases ha with ⟨φ, hφ, hlim⟩
+  apply uniq_limit
+  . exact hlim
+  . exact subseq_tendsto_of_tendsto' hl hφ
 }
 
 /-- Cauchy_sequence sequence -/
@@ -273,7 +280,11 @@ def CauchySequence (u : ℕ → ℝ) :=
   ∀ ε > 0, ∃ N, ∀ p q, p ≥ N → q ≥ N → |u p - u q| ≤ ε
 
 example : (∃ l, seq_limit u l) → CauchySequence u := by {
-  sorry
+  rintro ⟨l, hl⟩ ε ε_pos
+  rcases hl (ε/2) (by linarith) with ⟨N, hN⟩
+  use N
+  intros p q hp hq
+  linarith [hN p hp, hN q hq, abs_sub_le' (u p) l (u q)]
 }
 
 /-
@@ -282,4 +293,10 @@ In the next exercise, you can reuse
 -/
 
 example (hu : CauchySequence u) (hl : cluster_point u l) : seq_limit u l := by
-  sorry
+  intros ε ε_pos
+  rcases hu (ε/2) (by linarith) with ⟨N, hN⟩
+  rcases near_cluster hl (ε/2) (by linarith) N with ⟨n, hn, hun⟩
+  use N
+  intros m hm
+  specialize hN m n hm hn
+  linarith [abs_sub_le (u m) (u n) l]
